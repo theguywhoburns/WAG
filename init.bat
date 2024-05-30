@@ -1,4 +1,4 @@
-@call "%VS140COMNTOOLS%VsDevCmd.bat"
+echo "WARNING: Should be called from VsDevCmd.bat"
 mkdir build
 cd build
 cmake ..
