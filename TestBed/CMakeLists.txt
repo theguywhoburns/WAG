@@ -1,0 +1,36 @@
+cmake_minimum_required(VERSION 3.22)
+
+project(
+	TestBed
+	LANGUAGES CXX
+)
+
+file(GLOB_RECURSE SRC_FILES CMAKE_CONFIGURE_DEPENDS
+ ${CMAKE_CURRENT_SOURCE_DIR}/src/*
+ ${CMAKE_CURRENT_SOURCE_DIR}/include/*)
+
+add_executable(TestBed
+	${SRC_FILES}
+)
+
+target_sources(
+TestBed PRIVATE 
+${SRC_FILES} 
+${WAG_INCLUDE_DIR}
+)
+
+target_link_libraries(TestBed WAG)
+
+set_property(TARGET TestBed PROPERTY WORKING_DIRECTORY "${GLOBAL_BUILD_DIR}")
+
+set_target_properties(TestBed PROPERTIES
+LIBRARY_OUTPUT_DIRECTORY "${GLOBAL_BUILD_DIR}/"
+RUNTIME_OUTPUT_DIRECTORY "${GLOBAL_BUILD_DIR}/"
+ARCHIVE_OUTPUT_DIRECTORY "${GLOBAL_BUILD_DIR}/"
+DEBUG_OUTPUT_DIRECTORY "${GLOBAL_BUILD_DIR}/"
+PDB_OUTPUT_DIRECTORY "${GLOBAL_BUILD_DIR}/"
+)
+
+#TODO: Set the executable enviroment dir to the global build dir
+set_property(TARGET TestBed PROPERTY ENVIRONMENT "PATH;${GLOBAL_BUILD_DIR};")
+
