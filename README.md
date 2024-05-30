@@ -6,5 +6,5 @@ WeAreGods Engine
 - Locate WAG dir
 - Launch `init.bat` from `VsDevCmd.bat`
 
-## Linud Build
+## Linux/MacOS Build
 - Launch `init.sh`
