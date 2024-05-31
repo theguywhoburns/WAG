@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.22)
 
 project(
-	WAG
+	VulkanRenderer
 	LANGUAGES CXX
 )
 
@@ -16,20 +16,25 @@ file(GLOB_RECURSE SRC_FILES CMAKE_CONFIGURE_DEPENDS
 
 set(CMAKE_BINARY_DIR "${GLOBAL_BUILD_DIR}/")
 
-add_library(WAG SHARED ${SRC_FILES})
+find_package(Vulkan REQUIRED)
 
-target_include_directories(WAG
+add_library(VulkanRenderer SHARED ${SRC_FILES})
+
+target_include_directories(VulkanRenderer
   PUBLIC
   $<BUILD_INTERFACE:${WAG_INCLUDE_DIR}>
+	"${CMAKE_CURRENT_SOURCE_DIR}/include"
 	"${CMAKE_CURRENT_SOURCE_DIR}/src"
-  "${GLM_INCLUDE_DIR}"
+  "${Vulkan_INCLUDE_DIRS}"
 )
 
-target_compile_definitions(WAG PRIVATE WAGEXPORTS)
+target_link_libraries(VulkanRenderer Vulkan::Vulkan)
 
-set_target_properties(WAG PROPERTIES OUTPUT_NAME "WAG")
+target_compile_definitions(VulkanRenderer PRIVATE RENDERER_EXPORTS)
 
-set_target_properties(WAG PROPERTIES
+set_target_properties(VulkanRenderer PROPERTIES OUTPUT_NAME "VulkanRenderer")
+
+set_target_properties(VulkanRenderer PROPERTIES
   LIBRARY_OUTPUT_DIRECTORY "${GLOBAL_BUILD_DIR}/"
   RUNTIME_OUTPUT_DIRECTORY "${GLOBAL_BUILD_DIR}/"
   ARCHIVE_OUTPUT_DIRECTORY "${GLOBAL_BUILD_DIR}/"

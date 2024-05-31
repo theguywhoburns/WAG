@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.22)
 
 project(
-	WAG
+	DX12Renderer
 	LANGUAGES CXX
 )
 
@@ -16,20 +16,20 @@ file(GLOB_RECURSE SRC_FILES CMAKE_CONFIGURE_DEPENDS
 
 set(CMAKE_BINARY_DIR "${GLOBAL_BUILD_DIR}/")
 
-add_library(WAG SHARED ${SRC_FILES})
+add_library(DX12Renderer SHARED ${SRC_FILES})
 
-target_include_directories(WAG
+target_include_directories(DX12Renderer
   PUBLIC
   $<BUILD_INTERFACE:${WAG_INCLUDE_DIR}>
+	"${CMAKE_CURRENT_SOURCE_DIR}/include"
 	"${CMAKE_CURRENT_SOURCE_DIR}/src"
-  "${GLM_INCLUDE_DIR}"
 )
 
-target_compile_definitions(WAG PRIVATE WAGEXPORTS)
+target_compile_definitions(DX12Renderer PRIVATE RENDERER_EXPORTS)
 
-set_target_properties(WAG PROPERTIES OUTPUT_NAME "WAG")
+set_target_properties(DX12Renderer PROPERTIES OUTPUT_NAME "DX12Renderer")
 
-set_target_properties(WAG PROPERTIES
+set_target_properties(DX12Renderer PROPERTIES
   LIBRARY_OUTPUT_DIRECTORY "${GLOBAL_BUILD_DIR}/"
   RUNTIME_OUTPUT_DIRECTORY "${GLOBAL_BUILD_DIR}/"
   ARCHIVE_OUTPUT_DIRECTORY "${GLOBAL_BUILD_DIR}/"
