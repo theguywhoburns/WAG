@@ -22,9 +22,23 @@ public:
 		MouseMoved,
 		MouseMovedRaw,
 
+		Error,
 		Shutdown
 	};
+
+	union msg {
+		uint64_t ul[8];
+		uint32_t ui[16];
+		uint16_t us[32];
+		uint8_t  uc[64];
+	};
+	
 	static std::vector<std::vector<_FastEventCallback>> callback_array;
+	FastEvents type;
+	void Fire() {
+		for (auto callback : callback_array[type])
+			callback(this);
+	}
 };
 
 class Event {
