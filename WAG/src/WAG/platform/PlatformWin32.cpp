@@ -67,7 +67,7 @@ bool Platform::IsInitiallized() {
 	return initialized;
 }
 
-void Platform::Show(bool show = true) {
+void Platform::Show(bool show) {
 	if(!initialized) return;
 	ShowWindow(data->main_wnd, show ? SW_SHOWNORMAL : SW_HIDE);
 }
@@ -128,7 +128,7 @@ PlatformChildWindow::~PlatformChildWindow() {
 	delete data;
 }
 
-void PlatformChildWindow::Show(bool show = true) {
+void PlatformChildWindow::Show(bool show) {
 	ShowWindow(Platform::data->main_wnd, show ? SW_SHOWNORMAL : SW_HIDE);
 }
 
