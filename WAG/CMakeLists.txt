@@ -24,8 +24,11 @@ target_include_directories(WAG
 	"${CMAKE_CURRENT_SOURCE_DIR}/src"
   "${GLM_INCLUDE_DIR}"
 )
-
-target_compile_definitions(WAG PRIVATE WAGEXPORTS)
+set_property(TARGET WAG PROPERTY CXX_STANDARD 20)
+set_property(TARGET WAG PROPERTY C_STANDARD 17)
+set_property(TARGET WAG PROPERTY CXX_STANDARD_REQUIRED ON)
+set_property(TARGET WAG PROPERTY C_STANDARD_REQUIRED ON)
+target_compile_definitions(WAG PRIVATE WAG_EXPORT)
 
 set_target_properties(WAG PROPERTIES OUTPUT_NAME "WAG")
 
