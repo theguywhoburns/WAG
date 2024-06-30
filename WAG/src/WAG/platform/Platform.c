@@ -1,7 +1,8 @@
 #include <WAG/platform/Platform.h>
 #include <WAG/core/MemoryManagement.h>
+#include <WAG/core/Event.h>
 #ifdef PLATFORM_WINDOWS
-
+#include <assert.h>
 #include <Windows.h>
 
 struct PlatformInternalData {
@@ -23,8 +24,8 @@ bool PlatformInitialize(ApplicationCreationInfo* info, void* block, uint64_t* si
 	}
 
 	platform = (PlatformInternalData*)block;
-	platform->window_handle = NULL;
-	platform->class_handle = NULL;
+	platform->window_handle = 0;
+	platform->class_handle = 0;
 
 	WNDCLASSEXW _class = {sizeof(WNDCLASSEXW)};
 	_class.style = CS_HREDRAW | CS_VREDRAW;
@@ -46,10 +47,10 @@ bool PlatformInitialize(ApplicationCreationInfo* info, void* block, uint64_t* si
 
 	platform->instance_handle = _class.hInstance;
 
-	int size = MultiByteToWideChar(CP_UTF8, 0, info->AppName, -1, NULL, 0);
-	wchar_t* name = (wchar_t*)walloc(size, MEMORY_ENGINE);
-    size = MultiByteToWideChar(CP_UTF8, 0, info->AppName, -1, name, size);
-    if(!size)  {
+	int _size = MultiByteToWideChar(CP_UTF8, 0, info->AppName, -1, NULL, 0);
+	wchar_t* name = (wchar_t*)walloc(_size, MEMORY_ENGINE);
+    _size = MultiByteToWideChar(CP_UTF8, 0, info->AppName, -1, name, _size);
+    if(!_size)  {
     // TODO: Log error
 		return false;
     }
@@ -86,10 +87,6 @@ void PlatformShutdown() {
 	platform = NULL;
 }
 
-LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
-	return DefWindowProcW(hWnd, message, wParam, lParam);
-}
-
 void* PlatformAllocate(size_t size, bool align) {
 	void* ret = VirtualAlloc(NULL, size, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
 	return ret;
@@ -99,4 +96,26 @@ void  PlatformFree(void* block) {
 	VirtualFree(block, 0, MEM_RELEASE);
 }
 
+LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
+	switch (message) {
+	case WM_CLOSE:
+		PostQuitMessage(0);
+		break;
+	case WM_PAINT:
+		// We'll handle it ourselves
+		return 0;
+		break;
+	case WM_KEYDOWN:
+	case WM_SYSKEYDOWN:
+		Event e;
+		e.msg.uint_msg[0] = wParam;
+		e.msg.byte_msg[1] = (bool)GetAsyncKeyState((int)wParam) < 0;
+		EventDispatch(&e);
+		break;
+	default:
+		break;
+	}
+
+	return DefWindowProcW(hWnd, message, wParam, lParam);
+}
 #endif
