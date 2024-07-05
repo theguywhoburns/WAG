@@ -1,5 +1,6 @@
 #include <WAG/util/tinyvec.h>
 #include <WAG/core/MemoryManagement.h>
+#include <WAG/core/Logger.h>
 #include <string.h>
 
 void* _tinyvec_create(uint64_t length, uint64_t stride) {
@@ -78,7 +79,7 @@ void* _tinyvec_pop_at(void* array, uint64_t index, void* dest) {
 	uint64_t length = tinyvec_length(array);
 	uint64_t stride = tinyvec_stride(array);
 	if(index >= length) {
-	printf("Index outside the bounds of this array! Length:%lli, index: %lli\n", length, index);
+	WAGERROR("Index outside the bounds of this array! Length:%lli, index: %lli\n", length, index);
 	return array;
 	}
 	uint64_t addr = (uint64_t)array;
@@ -94,7 +95,7 @@ void* _tinyvec_insert_at(void* array, uint64_t index, void* value_ptr) {
 	uint64_t length = tinyvec_length(array);
 	uint64_t stride = tinyvec_stride(array);
 	if(index >= length) {
-	printf("Index outside the bounds of this array! Length:%lli, index: %lli\n", length, index);
+	WAGERROR("Index outside the bounds of this array! Length:%lli, index: %lli\n", length, index);
 	return array;
 	}
 	if(length >= tinyvec_capacity(array)) {

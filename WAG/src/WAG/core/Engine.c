@@ -53,10 +53,11 @@ Engine* InitializeEngine(struct ApplicationCreationInfo* appInfo, int argc, char
 	engine->internal->engine_internal_memory_block = FlatAllocatorCreate(NULL, prealloc_size, true);
 	// Memory subsystem
 	wmem_init(NULL, &engine->internal->memory_manager_memory_size);
-	engine->internal->memory_manager_memory_block = FlatAllocatorAlloc(engine->internal->engine_internal_memory_block, engine->internal->memory_manager_memory_size);
+	engine->internal->memory_manager_memory_block = walloc(engine->internal->memory_manager_memory_size, MEMORY_NO_AUTO_DEALLOC);
 	wmem_init(engine->internal->memory_manager_memory_block, &engine->internal->memory_manager_memory_size);
-	__mem_add_value(MEMORY_ENGINE, sizeof(Engine) + sizeof(EngineInternalData));
-	__mem_add_value(MEMORY_PREALLOCATOR, prealloc_size);
+	__mem_add_value(MEMORY_ENGINE, engine, sizeof(Engine));
+	__mem_add_value(MEMORY_ENGINE, engine->internal, sizeof(EngineInternalData));
+	__mem_add_value(MEMORY_PREALLOCATOR, engine->internal->engine_internal_memory_block, prealloc_size);
 
 	// Platform subsystem
 	PlatformInitialize(appInfo, NULL, &engine->internal->platform_memory_size);
@@ -79,7 +80,7 @@ Engine* InitializeEngine(struct ApplicationCreationInfo* appInfo, int argc, char
 	InputInit(engine->internal->input_memory_block, &engine->internal->input_memory_size);
 
 	// Application 
-	Application* app = walloc(sizeof(Application), MEMORY_PREALLOCATOR);
+	Application* app = walloc(sizeof(Application), MEMORY_APPLICATION);
 	app->data = appInfo->data;
 	app->OnCreate = appInfo->OnCreate;
 	app->OnUpdate = appInfo->OnUpdate;
@@ -94,6 +95,7 @@ bool RunEngine(Engine* engine) {
 	// Just a while loop that updates all the subsystems
 	engine->is_running = true;
 	engine->app_instance->OnCreate(engine->app_instance);
+	size_t i = 0;
 	while (engine->is_running) {
 		if(!PlatformUpdate()) {
 			WAGERROR("PlatformUpdate failed");
@@ -103,6 +105,10 @@ bool RunEngine(Engine* engine) {
 			WAGERROR("OnUpdate failed");
 			engine->is_running = false;
 		}
+		if(i > 100000) {
+			engine->is_running = false;
+		}
+		i++;
 	}
 	engine->app_instance->OnDestroy(engine->app_instance);
 	return true;
@@ -115,7 +121,12 @@ void DestroyEngine(Engine* engine) {
 	LoggerShutdown();
 	PlatformShutdown();
 	EventSystemShutdown();
+	#if _DEBUG
+		__print_allocation_map();
+	#endif
 	wmem_shutdown();
-	// Then we shutdown the subsystems and free their memory block
-	FlatAllocatorDestroy(engine->internal->engine_internal_memory_block);
+	wfree(engine->internal, sizeof(EngineInternalData), MEMORY_ENGINE);
+	wfree(engine->app_instance->data, engine->app_instance->AppSpecificDataSize, MEMORY_APPLICATION);
+	wfree(engine->app_instance, sizeof(Application), MEMORY_APPLICATION);
+	wfree(engine, sizeof(Engine), MEMORY_ENGINE);
 }

@@ -9,6 +9,7 @@ typedef enum _MEMORY_TYPE {
 	MEMORY_PREALLOCATOR = 3,
 	MEMORY_TINYVEC = 4,
 	MEMORY_UNKNOWN = 5,
+	MEMORY_NO_AUTO_DEALLOC = 6,
 #if _DEBUG
 	MEMORY_MAX // For debug memory usage logging
 #endif
@@ -26,9 +27,9 @@ WAG_API void* walloc_ext(size_t size, MEMORY_TYPE type, void (*dtor)(void* block
 WAG_API void* wcalloc_ext(size_t size, size_t count, MEMORY_TYPE type, void (*dtor)(void* block));
 
 //TODO: Debug and temp functions
-void __mem_add_value(MEMORY_TYPE type, size_t value);
-void __mem_sub_value(MEMORY_TYPE type, size_t value);
-
+void   __mem_add_value(MEMORY_TYPE type, void* addr, size_t value);
+void   __mem_sub_value(MEMORY_TYPE type, void* addr, size_t value);
+size_t __mem_get_value(MEMORY_TYPE type, void* addr);
 #if _DEBUG
-void __mem_dump();
+void __print_allocation_map();
 #endif
