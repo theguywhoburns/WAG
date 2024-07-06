@@ -44,7 +44,6 @@ Engine* InitializeEngine(struct ApplicationCreationInfo* appInfo, int argc, char
 	assert(appInfo->OnUpdate != NULL && "OnUpdate" != NULL);
 	assert(appInfo->OnFixedUpdate != NULL && "OnFixedUpdate" != NULL);
 	assert(appInfo->OnDestroy != NULL && "OnDestroy" != NULL);
-	
 	engine = (Engine*)walloc(sizeof(Engine), MEMORY_ENGINE);
 	engine->internal = (EngineInternalData*)walloc(sizeof(EngineInternalData), MEMORY_ENGINE);
 	// 60 megabytes as starting memory is ok
@@ -58,27 +57,22 @@ Engine* InitializeEngine(struct ApplicationCreationInfo* appInfo, int argc, char
 	__mem_add_value(MEMORY_ENGINE, engine, sizeof(Engine));
 	__mem_add_value(MEMORY_ENGINE, engine->internal, sizeof(EngineInternalData));
 	__mem_add_value(MEMORY_PREALLOCATOR, engine->internal->engine_internal_memory_block, prealloc_size);
-
 	// Platform subsystem
 	PlatformInitialize(appInfo, NULL, &engine->internal->platform_memory_size);
 	engine->internal->platform_memory_block = FlatAllocatorAlloc(engine->internal->engine_internal_memory_block, engine->internal->platform_memory_size);
 	PlatformInitialize(appInfo, engine->internal->platform_memory_block, &engine->internal->logger_memory_size);
-
 	// Logger subsystem
 	LoggerInitialize(NULL, &engine->internal->logger_memory_size);
 	engine->internal->logger_memory_block = FlatAllocatorAlloc(engine->internal->engine_internal_memory_block, engine->internal->logger_memory_size);
 	LoggerInitialize(engine->internal->logger_memory_block, &engine->internal->logger_memory_size);
-
 	// Event subsystem
 	EventSystemInit(NULL, &engine->internal->event_memory_size);
 	engine->internal->event_memory_block = FlatAllocatorAlloc(engine->internal->engine_internal_memory_block, engine->internal->event_memory_size);
 	EventSystemInit(engine->internal->event_memory_block, &engine->internal->event_memory_size);
-
 	// Input subsystem
 	InputInit(NULL, &engine->internal->input_memory_size);
 	engine->internal->input_memory_block = FlatAllocatorAlloc(engine->internal->engine_internal_memory_block, engine->internal->input_memory_size);
 	InputInit(engine->internal->input_memory_block, &engine->internal->input_memory_size);
-
 	// Application 
 	Application* app = walloc(sizeof(Application), MEMORY_APPLICATION);
 	app->data = appInfo->data;
@@ -87,7 +81,6 @@ Engine* InitializeEngine(struct ApplicationCreationInfo* appInfo, int argc, char
 	app->OnFixedUpdate = appInfo->OnFixedUpdate;
 	app->OnDestroy = appInfo->OnDestroy;
 	engine->app_instance = app;
-
 	return engine;
 }
 
@@ -110,6 +103,9 @@ bool RunEngine(Engine* engine) {
 		}
 		i++;
 	}
+	#if _DEBUG
+		__print_allocation_map();
+	#endif
 	engine->app_instance->OnDestroy(engine->app_instance);
 	return true;
 }
@@ -121,10 +117,9 @@ void DestroyEngine(Engine* engine) {
 	LoggerShutdown();
 	PlatformShutdown();
 	EventSystemShutdown();
-	#if _DEBUG
-		__print_allocation_map();
-	#endif
 	wmem_shutdown();
+	// The preallocator is freed automatically
+	wfree(engine->internal->memory_manager_memory_block, engine->internal->memory_manager_memory_size, MEMORY_NO_AUTO_DEALLOC);
 	wfree(engine->internal, sizeof(EngineInternalData), MEMORY_ENGINE);
 	wfree(engine->app_instance->data, engine->app_instance->AppSpecificDataSize, MEMORY_APPLICATION);
 	wfree(engine->app_instance, sizeof(Application), MEMORY_APPLICATION);

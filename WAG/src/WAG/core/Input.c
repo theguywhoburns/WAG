@@ -20,7 +20,7 @@ static input_internals* input = NULL;
 void InputKeyHandler(Event* e) {
 	int key = e->msg.byte_msg[0];
 	bool pressed = e->msg.byte_msg[1];
-	if(key < 0 || key >= KEYCODE_MAX) return;
+	if(key < 0 || key >= KEYS_MAX_KEYS) return;
 	input->pressed[key] = pressed;
 }
 
@@ -40,7 +40,7 @@ void InputInit(void* block, size_t* size){
 }
 
 void InputUpdate() {
-	memmove(input->old, input->pressed, sizeof(bool) * KEYCODE_MAX);
+	memmove(input->old, input->pressed, sizeof(bool) * KEYS_MAX_KEYS);
 	input->oldMouseX = input->mouseX;
 	input->oldMouseY = input->mouseY;
 }
@@ -50,13 +50,25 @@ void InputShutdown()
 	input = NULL;
 }
 
-bool GetButton(input_keycode button) {
+bool GetKey(keys button) {
 	return input->pressed[button];
 }
-bool GetButtonDown(input_keycode button) {
+
+bool GetKeyDown(keys button) {
 	return !input->old[button] && input->pressed[button]; 
 }
-bool GetButtonUp(input_keycode button) {
+
+bool GetKeyUp(keys button) {
+	return input->old[button] && !input->pressed[button];
+}
+
+bool GetButton(buttons button) {
+	return input->pressed[button];
+}
+bool GetButtonDown(buttons button) {
+	return !input->old[button] && input->pressed[button];
+}
+bool GetButtonUp(buttons button) {
 	// in reverse
 	return input->old[button] && !input->pressed[button];
 }

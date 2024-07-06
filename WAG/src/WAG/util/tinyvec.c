@@ -79,13 +79,13 @@ void* _tinyvec_pop_at(void* array, uint64_t index, void* dest) {
 	uint64_t length = tinyvec_length(array);
 	uint64_t stride = tinyvec_stride(array);
 	if(index >= length) {
-	WAGERROR("Index outside the bounds of this array! Length:%lli, index: %lli\n", length, index);
+	WAGERROR("Index outside the bounds of this array! Length:%zu, index: %zu\n", length, index);
 	return array;
 	}
 	uint64_t addr = (uint64_t)array;
 	memcpy(dest, (void*)(addr + (index * stride)), stride);
 	if(index != length -1) {
-	memcpy((void*)(addr +(index * stride)),(void*)(addr +((index + 1) * stride)),stride * (length - index));
+	memcpy((void*)(addr +(index * stride)),(void*)(addr +((index + 1) * stride)), stride * (length - index));
 	}
 	_tinyvec_field_set(array, TINYVEC_LENGTH, length - 1);
 	return array;

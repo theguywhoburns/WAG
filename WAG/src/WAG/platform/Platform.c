@@ -1,6 +1,7 @@
 #include <WAG/platform/Platform.h>
 #include <WAG/core/MemoryManagement.h>
 #include <WAG/core/Event.h>
+#include <WAG/core/Input.h>
 #ifdef PLATFORM_WINDOWS
 #include <assert.h>
 #include <Windows.h>
@@ -107,11 +108,36 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
 		break;
 	case WM_KEYDOWN:
 	case WM_SYSKEYDOWN:
+	  bool pressed = (message == WM_KEYDOWN || message == WM_SYSKEYDOWN);
+	  uint16_t key = (uint16_t)wParam;
+
+	  // Check for extended scan code.
+	  bool is_extended = (HIWORD(lParam) & KF_EXTENDED) == KF_EXTENDED;
+
+	  // Keypress only determines if _any_ alt/ctrl/shift key is pressed. Determine which one if so.
+	  if (wParam == VK_MENU) {
+	    key = is_extended ? KEY_RALT : KEY_LALT;
+	  } else if (wParam == VK_SHIFT) {
+	    // Annoyingly, KF_EXTENDED is not set for shift keys.
+	    uint32_t left_shift = MapVirtualKey(VK_LSHIFT, MAPVK_VK_TO_VSC);
+	    uint32_t scancode = ((lParam & (0xFF << 16)) >> 16);
+	    key = scancode == left_shift ? KEY_LSHIFT : KEY_RSHIFT;
+	  } else if (wParam == VK_CONTROL) {
+	    key = is_extended ? KEY_RCONTROL : KEY_LCONTROL;
+	  }
+
+	  // HACK: This is gross windows keybind crap.
+	  if (key == VK_OEM_1) {
+	    key = KEY_SEMICOLON;
+	  }
+
+	  
 		Event e;
-		e.msg.uint_msg[0] = wParam;
-		e.msg.byte_msg[1] = (bool)GetAsyncKeyState((int)wParam) < 0;
+		e.msg.uint_msg[0] = key;
+		e.msg.byte_msg[2] = pressed;
 		EventDispatch(&e);
-		break;
+		// Return 0 to prevent default window behaviour for some keypresses, such as alt.
+	  return 0;
 	default:
 		break;
 	}
