@@ -4,10 +4,6 @@
 #include <stdbool.h>
 #include <stddef.h>
 
-#ifdef _MSC_VER
-#define _CRT_SECURE_NO_WARNINGS
-#endif
-
 #ifdef _MSC_VER 
 #define STATIC_ASSERT(expr) _STATIC_ASSERT(expr)
 #else

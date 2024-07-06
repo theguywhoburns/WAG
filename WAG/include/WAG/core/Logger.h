@@ -28,7 +28,7 @@ typedef enum log_level {
  * @param state 0 if just requesting memory erquirement, otherwise allocated block of memory.
  * @return bool true on success; otherwise false.
 */
-void LoggerInitialize(void* block, uint64_t* memory_requirement);
+bool LoggerInitialize(void* block, uint64_t* memory_requirement);
 void LoggerShutdown();
 
 void log_output(log_level level, const char* message, ...);

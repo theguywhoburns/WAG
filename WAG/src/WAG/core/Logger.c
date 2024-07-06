@@ -13,14 +13,15 @@ typedef struct LoggerInternalData {
 } LoggerInternalData;
 
 static LoggerInternalData* logger = NULL;
-void LoggerInitialize(void* block, uint64_t* memory_requirement) {
+bool LoggerInitialize(void* block, uint64_t* memory_requirement) {
 	assert(logger == NULL && "Attempted to initialize logger twice");
 	if(block == NULL) {
 		*memory_requirement = sizeof(LoggerInternalData);
-		return;
+		return true;
 	}
 	memset(block, 0, sizeof(LoggerInternalData));
 	logger = (LoggerInternalData*)block;
+	return true;
 }
 
 void LoggerShutdown() {

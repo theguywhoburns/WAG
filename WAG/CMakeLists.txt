@@ -5,8 +5,10 @@ project(
 	LANGUAGES CXX
 )
 
-if(MVSC) 
-	add_definitions(-D_CRT_SECURE_NO_WARNINGS) #no warnings shit
+if(MSVC) 
+	add_definitions(/D_CRT_SECURE_NO_WARNINGS) #no warnings shit
+else()
+  add_definitions(-D_CRT_SECURE_NO_WARNINGS) #no warnings shit
 endif()
 
 file(GLOB_RECURSE SRC_FILES CMAKE_CONFIGURE_DEPENDS

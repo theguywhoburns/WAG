@@ -281,8 +281,8 @@ INLINE mat4 quat_to_rotation_matrix(quat q, vec3 center) {
 
 quat quat_from_axis_angle(vec3 axis, float angle, bool normalize) {
   const float half_angle = 0.5f * angle;
-  float s = wsin(half_angle);
-  float c = wcos(half_angle);
+  float s = (float)wsin(half_angle);
+  float c = (float)wcos(half_angle);
   quat q = (quat){s * axis.x, s * axis.y, s * axis.z, c};
   return normalize ? quat_normalize(q) : q;
 }
@@ -325,15 +325,15 @@ INLINE quat quat_slerp(quat q_0, quat q_1, float percentage) {
   }
 
   // Since dot is in range [0, DOT_THRESHOLD], acos is safe
-  float theta_0 = wacos(dot);
+  float theta_0 = (float)wacos(dot);
   // theta_0 = angle between input vectors
   float theta = theta_0 * percentage;
   // theta = angle between v0 and result
-  float sin_theta = wsin(theta);
+  float sin_theta = (float)wsin(theta);
   // compute this value only once
-  float sin_theta_0 = wsin(theta_0);
+  float sin_theta_0 = (float)wsin(theta_0);
   // compute this value only once
-  float s0 = wcos(theta) - dot * sin_theta / sin_theta_0;
+  float s0 = (float)wcos(theta) - dot * sin_theta / sin_theta_0;
   // == sin(theta_0 - theta) / sin(theta_0)
   float s1 = sin_theta / sin_theta_0;
   return (quat){
@@ -367,8 +367,8 @@ INLINE void rgb_uint32_t_to_vec3(uint32_t r, uint32_t g, uint32_t b, vec3 *out_v
 }
 
 INLINE void vec3_to_rgb_uint32_t(vec3 v, uint32_t *out_r, uint32_t *out_g, uint32_t *out_b) {
-  *out_r = v.r * 255;
-  *out_g = v.g * 255;
-  *out_b = v.b * 255;
+  *out_r = (uint32_t)v.r * 255;
+  *out_g = (uint32_t)v.g * 255;
+  *out_b = (uint32_t)v.b * 255;
 }
 

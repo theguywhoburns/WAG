@@ -1,10 +1,12 @@
 #include <WAG/platform/Platform.h>
 #include <WAG/core/MemoryManagement.h>
 #include <WAG/core/Event.h>
+#include <WAG/core/Logger.h>
 #include <WAG/core/Input.h>
 #ifdef PLATFORM_WINDOWS
 #include <assert.h>
-#include <Windows.h>
+#include <windows.h>
+#include <windowsx.h>  // param input extraction
 
 struct PlatformInternalData {
 	HWND window_handle;
@@ -53,15 +55,18 @@ bool PlatformInitialize(ApplicationCreationInfo* info, void* block, uint64_t* si
     _size = MultiByteToWideChar(CP_UTF8, 0, info->AppName, -1, name, _size);
     if(!_size)  {
     // TODO: Log error
+		WAGERROR("Failed to convert string: %d", GetLastError());
 		return false;
     }
 
 	platform->window_handle = CreateWindowExW(0, _class.lpszClassName, name , WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT, info->windowWidth, info->windowHeight, NULL, NULL, _class.hInstance, NULL);
 	if(!platform->window_handle) {
 		// TODO: Log error
+		WAGERROR("Failed to create window: %d", GetLastError());
 		return false;
 	}
-
+	ShowWindow(platform->window_handle, SW_SHOW);
+	UpdateWindow(platform->window_handle);
 	return true;
 }
 
@@ -82,7 +87,7 @@ void PlatformShutdown() {
 
 	if(platform->class_handle) {
 		UnregisterClassW((LPCWSTR)platform->class_handle, platform->instance_handle);
-		platform->class_handle = NULL;
+		platform->class_handle = (ATOM)NULL;
 	}
 	
 	platform = NULL;
@@ -100,14 +105,21 @@ void  PlatformFree(void* block) {
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
 	switch (message) {
 	case WM_CLOSE:
+		Event e = {0};
+		strcpy(e.msg.ubyte_msg + 1, "Window close requested"); 
+		EventDispatch(EVENT_SHUTDOWN, &e);// Empty event cause we close the window
+		break;
+	case WM_DESTROY:
 		PostQuitMessage(0);
 		break;
-	case WM_PAINT:
-		// We'll handle it ourselves
-		return 0;
+	case WM_ERASEBKGND:
+    // Notify the OS that erasing will be handled by the application to prevent flicker.
+    return 1;
 		break;
 	case WM_KEYDOWN:
-	case WM_SYSKEYDOWN:
+  case WM_SYSKEYDOWN:
+  case WM_KEYUP:
+  case WM_SYSKEYUP:
 	  bool pressed = (message == WM_KEYDOWN || message == WM_SYSKEYDOWN);
 	  uint16_t key = (uint16_t)wParam;
 
@@ -130,14 +142,67 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
 	  if (key == VK_OEM_1) {
 	    key = KEY_SEMICOLON;
 	  }
-
 	  
-		Event e;
-		e.msg.uint_msg[0] = key;
-		e.msg.byte_msg[2] = pressed;
-		EventDispatch(&e);
+		// NOTE: This is a hack. if named e, it breaks the compiler...	idk why lol
+		Event _e = {0};
+		_e.msg.uint_msg[0] = key;
+		_e.msg.byte_msg[2] = pressed;
+		EventDispatch(EVENT_KEY_AND_MOUSE_BUTTON, &_e);
 		// Return 0 to prevent default window behaviour for some keypresses, such as alt.
 	  return 0;
+	case WM_MOUSEMOVE: {
+    // Mouse move
+    int x_position = GET_X_LPARAM(lParam);
+    int y_position = GET_Y_LPARAM(lParam);
+    // Pass over to the input subsystem.
+
+		Event e = {0};
+		e.msg.int_msg[0] = x_position;	
+		e.msg.int_msg[1] = y_position;
+		EventDispatch(EVENT_MOUSE_MOVED, &e);
+  } break;
+  case WM_MOUSEWHEEL: {
+  	int z_delta = GET_WHEEL_DELTA_WPARAM(wParam);
+ 	 	if (z_delta != 0) {
+ 	  	// Flatten the input to an OS-independent (-1, 1)
+	    z_delta = (z_delta < 0) ? -1 : 1;
+
+	    Event e = {0};
+	    e.msg.int_msg[0] = z_delta;
+	    EventDispatch(EVENT_MOUSE_SCROLLED, &e);
+ 	 	}
+ 	} break;
+	case WM_LBUTTONDOWN:
+  case WM_MBUTTONDOWN:
+  case WM_RBUTTONDOWN:
+  case WM_LBUTTONUP:
+  case WM_MBUTTONUP:
+  case WM_RBUTTONUP: {
+    bool pressed = message == WM_LBUTTONDOWN || message == WM_RBUTTONDOWN || message == WM_MBUTTONDOWN;
+    buttons mouse_button = BUTTON_MAX_BUTTONS;
+    switch (message) {
+      case WM_LBUTTONDOWN:
+      case WM_LBUTTONUP:
+        mouse_button = BUTTON_LEFT;
+        break;
+      case WM_MBUTTONDOWN:
+      case WM_MBUTTONUP:
+        mouse_button = BUTTON_MIDDLE;
+        break;
+      case WM_RBUTTONDOWN:
+      case WM_RBUTTONUP:
+        mouse_button = BUTTON_RIGHT;
+      break;
+    }
+    // Pass over to the input subsystem.
+    if (mouse_button != BUTTON_MAX_BUTTONS) {
+      
+			Event e = {0};
+			e.msg.byte_msg[0] = mouse_button;
+			e.msg.byte_msg[1] = pressed;
+			EventDispatch(EVENT_KEY_AND_MOUSE_BUTTON, &e);
+    }
+	} break;
 	default:
 		break;
 	}

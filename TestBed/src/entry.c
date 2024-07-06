@@ -13,7 +13,10 @@ ApplicationCreationInfo GetAppInfo() {
 		.OnCreate = OnCreate,
 		.OnUpdate = OnUpdate,
 		.OnFixedUpdate = OnFixedUpdate,
-		.OnDestroy = OnDestroy
+		.OnDestroy = OnDestroy,
+		.windowHeight = 600,
+		.windowWidth = 800,
+		.AppName = "TestBed"
 	};
 	return appInfo;
 }

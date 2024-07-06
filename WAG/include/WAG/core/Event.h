@@ -6,9 +6,14 @@
 #define EVENT_MSG_SIZE 128
 typedef union _EventMsg {
 	uint64_t ulong_msg[EVENT_MSG_SIZE / sizeof(uint64_t)]; 
+	int64_t  ilong_msg[EVENT_MSG_SIZE / sizeof( int64_t)]; 
+
 	uint32_t uint_msg[EVENT_MSG_SIZE / sizeof(uint32_t)];
+	int32_t   int_msg[EVENT_MSG_SIZE / sizeof( int32_t)];
 	uint16_t ushort_msg[EVENT_MSG_SIZE / sizeof(uint16_t)];
-	uint8_t  byte_msg[EVENT_MSG_SIZE / sizeof(uint8_t)];
+	int16_t   short_msg[EVENT_MSG_SIZE / sizeof( int16_t)];
+	uint8_t  ubyte_msg[EVENT_MSG_SIZE / sizeof(uint8_t)];
+	int8_t    byte_msg[EVENT_MSG_SIZE / sizeof( int8_t)];
 } EventMsg;
 
 typedef enum _EventType {
@@ -73,7 +78,7 @@ typedef bool (*EventHandler)(Event* event);
 
 
 
-void EventSystemInit(void* block, size_t* size);
+bool EventSystemInit(void* block, size_t* size);
 void EventRegisterHandler(EventType type, EventHandler handler);
-bool EventDispatch(Event* event);
+bool EventDispatch(EventType type, Event* event);
 void EventSystemShutdown();

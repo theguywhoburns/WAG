@@ -7,7 +7,11 @@ int main(int argc, char** argv) {
 	ApplicationCreationInfo appInfo = GetAppInfo();
 	Engine* engine = InitializeEngine(&appInfo, argc, &argv);
 
-	RunEngine(engine);
-	DestroyEngine(engine);
-	return 0;
+	if(engine) {
+		RunEngine(engine);
+		DestroyEngine(engine);
+		return 0;
+	} else {
+		return -1;
+	}
 }

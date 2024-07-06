@@ -293,7 +293,7 @@ typedef enum keys {
   KEYS_MAX_KEYS = 0xFF
 } keys;
 
-void InputInit(void* block, size_t* size);
+bool InputInit(void* block, size_t* size);
 void InputUpdate();
 void InputShutdown();
 

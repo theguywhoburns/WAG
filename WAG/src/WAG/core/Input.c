@@ -1,6 +1,7 @@
 #include <WAG/core/Input.h>
 #include <WAG/core/MemoryManagement.h>
 #include <WAG/core/Event.h>
+#include <WAG/core/Logger.h>
 #include <string.h>
 #include <assert.h>
 
@@ -17,26 +18,39 @@ typedef struct _input_internals {
 
 static input_internals* input = NULL; 
 
-void InputKeyHandler(Event* e) {
+bool InputKeyHandler(Event* e) {
+	if(!input) {
+		WAGDEBUG("Tried to call InputKeyHandler with uninitialized Input");
+		return true;
+	}
 	int key = e->msg.byte_msg[0];
 	bool pressed = e->msg.byte_msg[1];
-	if(key < 0 || key >= KEYS_MAX_KEYS) return;
+	if(key < 0 || key >= KEYS_MAX_KEYS) return false; // Literally impossible BUT JUST IN CASE
 	input->pressed[key] = pressed;
+	return true;
 }
 
-void InputMouseHandler(int x, int y) {
-	input->mouseX = x;
-	input->mouseY = y;
+bool InputMouseHandler(Event* e) {
+	if(!input) {
+		WAGDEBUG("Tried to call InputMouseHandler with uninitialized Input");
+		return true;
+	}
+	input->mouseX = e->msg.int_msg[0];
+	input->mouseY = e->msg.int_msg[1];
+	return true;
 }
 
-void InputInit(void* block, size_t* size){
+bool InputInit(void* block, size_t* size){
   if(block == NULL) {
     *size = sizeof(input_internals);
-    return;
+    return true;
   }
 	assert(input == NULL && "Attempted to initialize Input twice");
 	input = (input_internals*)block;
 	memset(input, 0, sizeof(input_internals));
+	EventRegisterHandler(EVENT_KEY_AND_MOUSE_BUTTON, InputKeyHandler);
+	EventRegisterHandler(EVENT_MOUSE_MOVED, InputMouseHandler);
+	return true;
 }
 
 void InputUpdate() {
@@ -45,8 +59,7 @@ void InputUpdate() {
 	input->oldMouseY = input->mouseY;
 }
 
-void InputShutdown()
-{
+void InputShutdown() {
 	input = NULL;
 }
 

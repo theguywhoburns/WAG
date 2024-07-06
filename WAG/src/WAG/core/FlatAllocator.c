@@ -2,13 +2,14 @@
 #include <WAG/core/MemoryManagement.h>
 #include <WAG/core/Logger.h>
 
-FlatAllocator* FlatAllocatorCreate(void* ptr, size_t size) {
+FlatAllocator* FlatAllocatorCreate(void* ptr, size_t size, bool own) {
 	FlatAllocator* allocator = (FlatAllocator*)walloc(sizeof(FlatAllocator), MEMORY_PREALLOCATOR);
 	*allocator = (FlatAllocator){0};
 	
 	if(ptr == NULL) { allocator->ptr = walloc(size, MEMORY_PREALLOCATOR); allocator->own = true; }
 	else allocator->ptr = ptr;
 	allocator->size = size;
+	allocator->own = own;
 	return allocator;
 }
 
