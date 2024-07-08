@@ -5,6 +5,10 @@
 
 typedef struct RendererInternals RendererInternals;
 
+typedef struct RenderPacket {	
+	void* placeholder;
+} RenderPacket;
+
 typedef struct IRendererInterface {
 	DynamicLibrary handle;
 	RendererInternals* internals;
@@ -13,7 +17,7 @@ typedef struct IRendererInterface {
 	bool (*Render)(struct IRenderer* renderer);
 	bool (*EndFrame)(struct IRenderer* renderer);
 	bool (*Present)(struct IRenderer* renderer);
-	bool (*Release)(struct IRenderer* renderer);
+	bool (*Shutdown)(struct IRenderer* renderer);
 } IRendererInterface;
 
 // Path should be supplied from the config file, will return false on fail

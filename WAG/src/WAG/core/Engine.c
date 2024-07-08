@@ -6,7 +6,9 @@
 #include <WAG/core/Logger.h>
 #include <WAG/core/Input.h>
 #include <WAG/core/Event.h>
+#include <WAG/core/WagTypes.h>
 #include <WAG/platform/Platform.h>
+#include <WAG/util/printf.h>
 
 // TODO:
 struct EngineInternalData {
@@ -131,6 +133,12 @@ Engine* InitializeEngine(struct ApplicationCreationInfo* appInfo, int argc, char
 	app->OnDestroy = appInfo->OnDestroy;
 	engine->app_instance = app;
 	EventRegisterHandler(EVENT_SHUTDOWN, EngineShutdownEventHandler);
+
+	WagException ex = {0};
+	ex.line = __LINE__;
+	ex.file = __FILE__;
+	ex.message = "WAG Engine Initialized";
+	printf("EXCEPTION: %WE\n", ex);
 	return engine;
 }
 

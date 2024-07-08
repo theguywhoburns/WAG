@@ -4,6 +4,10 @@
 #include <stdio.h>
 #include <stdarg.h>
 
+void _putchar(char character) {
+	putc(character, stdout);
+}
+
 //TODO: Write the log data to the file
 static void console_write(const char* message, uint8_t colour);
 static void console_write_error(const char* message, uint8_t colour);
