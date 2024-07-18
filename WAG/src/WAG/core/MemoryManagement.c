@@ -10,12 +10,12 @@
 
 typedef size_t wmem_debug_size_t;
 
-bool wmem_debug_size_t_ht_equal(wmem_debug_size_t a, wmem_debug_size_t b) {
-	return a == b;
+wmem_debug_size_t wmem_debug_size_t_copy(wmem_debug_size_t a) {
+	return a;
 }
 
 void wmem_debug_size_t_ht_dtor(wmem_debug_size_t a) {
-	// TODO: NOTHING
+	// Do nothing
 }
 
 size_t wmem_debug_size_t_ht_hash(wmem_debug_size_t a) {
@@ -24,14 +24,17 @@ size_t wmem_debug_size_t_ht_hash(wmem_debug_size_t a) {
 	return ret;
 }
 
-__define_ht_main(wmem_debug_size_t, wmem_debug_size_t);
-__define_ht_main_impl(wmem_debug_size_t, wmem_debug_size_t);
+bool wmem_debug_size_t_ht_equal(wmem_debug_size_t a, wmem_debug_size_t b) {
+	return a == b;
+}
 
+define_ht_all(wmem_debug_size_t, wmem_debug_size_t);
+define_ht_all_impl(wmem_debug_size_t, wmem_debug_size_t);
 #endif 
 
 typedef struct MemInternalData {
 	#if _DEBUG
-	wmem_debug_size_t_wmem_debug_size_t_ht* allocation_map[MEMORY_MAX];
+	wmem_debug_size_t_wmem_debug_size_t_ht_t allocation_map[MEMORY_MAX];
 	#else 
 	uint64_t alloc_arr[MEMORY_MAX];
 	#endif
@@ -51,7 +54,7 @@ void wmem_init(void* block, uint64_t* size) {
 	mem = (MemInternalData*)block;
 #if _DEBUG
 	for(size_t i = 0; i < MEMORY_MAX; i++) {
-		mem->allocation_map[i] = wmem_debug_size_t_wmem_debug_size_t_ht_init_ex(1000);
+		mem->allocation_map[i] = wmem_debug_size_t_wmem_debug_size_t_ht_create_ex(1000, 0.75);
 	}
 #else
 	memset(mem->alloc_arr, 0, sizeof(mem->alloc_arr));
@@ -62,12 +65,10 @@ void wmem_shutdown() {
 	#if _DEBUG
 	for(size_t i = 0; i < MEMORY_MAX; i++) {
 		if(i == MEMORY_NO_AUTO_DEALLOC || i == MEMORY_ENGINE || i == MEMORY_APPLICATION) { // Yeah i know it's stupid
-			wmem_debug_size_t_wmem_debug_size_t_ht_destroy(mem->allocation_map[i]);
+			wmem_debug_size_t_wmem_debug_size_t_ht_destroy(&mem->allocation_map[i]);
 			continue;
 		}
-		ht_for_each(mem->allocation_map[i], wmem_debug_size_t, wmem_debug_size_t) 
-		wfree((void*)cur->key, cur->val, i);
-		ht_for_each_end()
+		wmem_debug_size_t_wmem_debug_size_t_ht_destroy(&mem->allocation_map[i]);
 	}
 	#endif
 	mem = NULL;
@@ -89,7 +90,7 @@ void  wfree(void* ptr, size_t size, MEMORY_TYPE type) {
 	}
 	#if _DEBUG
 	if(mem != NULL) {
-	wmem_debug_size_t_wmem_debug_size_t_ht_remove(mem->allocation_map[type], address);
+	wmem_debug_size_t_wmem_debug_size_t_ht_remove(&mem->allocation_map[type], address);
 	}
 	#else
 	if(mem != NULL) {
@@ -128,7 +129,7 @@ void* walloc_ext(size_t size, MEMORY_TYPE type, void (*dtor)(void* block)) {
 	*((uintptr_t*)address) = (uintptr_t)dtor;
 	#if _DEBUG
 	if(mem != NULL) {
-	wmem_debug_size_t_wmem_debug_size_t_ht_set(mem->allocation_map[type], address, size);
+	wmem_debug_size_t_wmem_debug_size_t_ht_set(&mem->allocation_map[type], address, size);
 	}
 	#else
 	if(mem != NULL) {
@@ -144,7 +145,7 @@ void* wcalloc_ext(size_t size, size_t count, MEMORY_TYPE type, void (*dtor)(void
 	*((uintptr_t*)address) = (uintptr_t)dtor;
 	#if _DEBUG
 	if(mem != NULL) {
-	wmem_debug_size_t_wmem_debug_size_t_ht_set(mem->allocation_map[type], address, size * count);
+	wmem_debug_size_t_wmem_debug_size_t_ht_set(&mem->allocation_map[type], address, size * count);
 	}
 	#else
 	if(mem != NULL) {
@@ -157,7 +158,7 @@ void* wcalloc_ext(size_t size, size_t count, MEMORY_TYPE type, void (*dtor)(void
 void __mem_add_value(MEMORY_TYPE type, void* addr, size_t value) {
 	#if _DEBUG
 	if(mem != NULL) {
-	wmem_debug_size_t_wmem_debug_size_t_ht_set(mem->allocation_map[type], (size_t)addr, value);
+	wmem_debug_size_t_wmem_debug_size_t_ht_set(&mem->allocation_map[type], (size_t)addr, value);
 	}
 	#else
 	if(mem != NULL) {
@@ -169,7 +170,7 @@ void __mem_add_value(MEMORY_TYPE type, void* addr, size_t value) {
 void __mem_sub_value(MEMORY_TYPE type, void* addr, size_t value) {
 	#if _DEBUG
 	if(mem != NULL) {
-	wmem_debug_size_t_wmem_debug_size_t_ht_remove(mem->allocation_map[type], (size_t)addr);
+	wmem_debug_size_t_wmem_debug_size_t_ht_remove(&mem->allocation_map[type], (size_t)addr);
 	}
 	#else
 	if(mem != NULL) {
@@ -181,7 +182,7 @@ void __mem_sub_value(MEMORY_TYPE type, void* addr, size_t value) {
 size_t __mem_get_value(MEMORY_TYPE type, void* addr) {
 	#if _DEBUG
 	if(mem != NULL) {
-	return wmem_debug_size_t_wmem_debug_size_t_ht_get(mem->allocation_map[type], (size_t)addr);
+	return wmem_debug_size_t_wmem_debug_size_t_ht_get(&mem->allocation_map[type], (size_t)addr);
 	}
 	#else
 	if(mem != NULL) {
@@ -208,10 +209,10 @@ void __print_allocation_map() {
 		WAGDEBUG("Allocation map for %s", memory_type[i]);
 		WAGDEBUG("------------------------------------");
 		size_t allocated_total = 0;
-		ht_for_each(mem->allocation_map[i], wmem_debug_size_t, wmem_debug_size_t) 
+		ht_foreach(mem->allocation_map[i], cur, i, wmem_debug_size_t, wmem_debug_size_t) 
 		WAGDEBUG("Address: 0x%p, size: %d", cur->key, cur->val);
 		allocated_total += cur->val;
-		ht_for_each_end()
+		ht_foreach_end;
 		if(allocated_total == 0) {WAGDEBUG("WoW Such Empty!");}
 		else {WAGDEBUG("Totally allocated: %d", allocated_total);}
 		WAGDEBUG("------------------------------------");
