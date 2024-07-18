@@ -82,6 +82,7 @@
 			int comparison = key_t##_ht_equal(current_entry->key, key);	\
 			if (comparison == 0) {	\
 				val_t##_ht_dtor(current_entry->val);	\
+				printf("wtf at index %d\n", index);	\
 				current_entry->val = val;	\
 				break;	\
 			} else {	\
@@ -94,6 +95,7 @@
 			ht->length++;	\
 			current_entry->is_set = true;	\
 			current_entry->key = key_t##_copy(key);	\
+			printf("wtf2 at index %d\n", index);	\
 			current_entry->val = val;	\
 		} \
 		if ((double)ht->length / ht->size > ht->max_load_factor) { key_t##_##val_t##_ht_resize(ht); }	\
@@ -214,6 +216,6 @@
 	___define_ht_remove_impl(key_t, val_t)	\
 	___define_ht_resize_impl(key_t, val_t)
 
-#define ht_foreach(ht, iter_name, index_name, key_t, val_t) for(size_t index_name = 0; index_name < ht.size; index_name++) { ___ht_entry_##key_t##_##val_t* iter_name = &ht.entries[index_name]; if(!iter_name->is_set) continue;
+#define ht_foreach(ht, iter_name, index_name, key_t, val_t) for(size_t index_name = 0; index_name < ht.size; index_name++) { ___ht_entry_##key_t##_##val_t* iter_name = &ht.entries[index_name]; if(!iter_name->is_set) {continue;} else {
 
-#define ht_foreach_end }
+#define ht_foreach_end } }

@@ -64,10 +64,6 @@ void wmem_init(void* block, uint64_t* size) {
 void wmem_shutdown() {
 	#if _DEBUG
 	for(size_t i = 0; i < MEMORY_MAX; i++) {
-		if(i == MEMORY_NO_AUTO_DEALLOC || i == MEMORY_ENGINE || i == MEMORY_APPLICATION) { // Yeah i know it's stupid
-			wmem_debug_size_t_wmem_debug_size_t_ht_destroy(&mem->allocation_map[i]);
-			continue;
-		}
 		wmem_debug_size_t_wmem_debug_size_t_ht_destroy(&mem->allocation_map[i]);
 	}
 	#endif
@@ -209,7 +205,7 @@ void __print_allocation_map() {
 		WAGDEBUG("Allocation map for %s", memory_type[i]);
 		WAGDEBUG("------------------------------------");
 		size_t allocated_total = 0;
-		ht_foreach(mem->allocation_map[i], cur, i, wmem_debug_size_t, wmem_debug_size_t) 
+		ht_foreach(mem->allocation_map[i], cur, j, wmem_debug_size_t, wmem_debug_size_t) 
 		WAGDEBUG("Address: 0x%p, size: %d", cur->key, cur->val);
 		allocated_total += cur->val;
 		ht_foreach_end;
