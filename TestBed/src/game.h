@@ -1,12 +1,12 @@
 #pragma once
 
-#include <WAG/core/Application.h>
+#include <WAG.h>
 
-struct ApplicationSpecificData {
-	int a;
-};
+typedef struct TestBed {
+    void* temp;
+} TestBed;
 
-bool OnCreate(Application* app);
-bool OnUpdate(Application* app);
-bool OnFixedUpdate(Application* app);
-bool OnDestroy(Application* app);
+bool OnCreate(WAG* engine, TestBed* testbed);
+bool OnUpdate(WAG* engine, TestBed* testbed);
+bool OnFixedUpdate(WAG* engine, TestBed* testbed);
+bool OnDestroy(WAG* engine, TestBed* testbed);

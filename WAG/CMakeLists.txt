@@ -5,10 +5,18 @@ project(
 	LANGUAGES CXX
 )
 
+find_library(MATH_LIBRARY m REQUIRED)
+
 if(MSVC) 
 	add_definitions(/D_CRT_SECURE_NO_WARNINGS) #no warnings shit
+	add_definitions(/DWAG_MAJOR=0) 
+	add_definitions(/DWAG_MINOR=0) 
+	add_definitions(/DWAG_PATCH=1) 
 else()
   add_definitions(-D_CRT_SECURE_NO_WARNINGS) #no warnings shit
+  add_definitions(-DWAG_MAJOR=0) 
+	add_definitions(-DWAG_MINOR=0) 
+	add_definitions(-DWAG_PATCH=1) 
 endif()
 
 file(GLOB_RECURSE SRC_FILES CMAKE_CONFIGURE_DEPENDS
@@ -25,9 +33,7 @@ target_include_directories(WAG
   "${GLM_INCLUDE_DIR}"
 )
 
-set_property(TARGET WAG PROPERTY CXX_STANDARD 20)
 set_property(TARGET WAG PROPERTY C_STANDARD 17)
-set_property(TARGET WAG PROPERTY CXX_STANDARD_REQUIRED ON)
 set_property(TARGET WAG PROPERTY C_STANDARD_REQUIRED ON)
 
 set_target_properties(WAG PROPERTIES OUTPUT_NAME "WAG")
@@ -39,3 +45,5 @@ set_target_properties(WAG PROPERTIES
 	DEBUG_OUTPUT_DIRECTORY "${GLOBAL_BUILD_DIR}/"
   PDB_OUTPUT_DIRECTORY "${GLOBAL_BUILD_DIR}/"
 )
+target_compile_definitions(WAG PRIVATE PPC_EXPORT)
+target_link_libraries(WAG ${MATH_LIBRARY})

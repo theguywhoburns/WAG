@@ -1,17 +1,17 @@
-#include "game.h"
+#include <game.h>
 
-bool OnCreate(Application* app) {
-	return true;
+bool OnCreate(WAG* engine, TestBed* testbed) {
+
 }
 
-bool OnUpdate(Application* app) {
-	return true;
+bool OnUpdate(WAG* engine, TestBed* testbed) {
+
 }
 
-bool OnFixedUpdate(Application* app) {
-	return true;
+bool OnFixedUpdate(WAG* engine, TestBed* testbed) {
+
 }
 
-bool OnDestroy(Application* app) {
-	return true;
+bool OnDestroy(WAG* engine, TestBed* testbed) {
+
 }

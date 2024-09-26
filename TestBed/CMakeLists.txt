@@ -18,7 +18,7 @@ TestBed PRIVATE
 ${SRC_FILES} 
 ${WAG_INCLUDE_DIR}
 )
-
+target_include_directories(TestBed PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 target_link_libraries(TestBed WAG)
 
 set_property(TARGET TestBed PROPERTY WORKING_DIRECTORY "${GLOBAL_BUILD_DIR}")
@@ -33,4 +33,3 @@ PDB_OUTPUT_DIRECTORY "${GLOBAL_BUILD_DIR}/"
 
 #TODO: Set the executable enviroment dir to the global build dir
 set_property(TARGET TestBed PROPERTY ENVIRONMENT "PATH;${GLOBAL_BUILD_DIR};")
-

@@ -1,22 +1,17 @@
-#include <WAG/entry.h>
-#include <WAG/core/MemoryManagement.h>
-#include <stdlib.h>
-#include "game.h"
+#include <entry.h>
+#include <game.h>
 
-ApplicationCreationInfo GetAppInfo() {
-	// TODO: Get rid of malloc
-	ApplicationSpecificData* data = walloc(sizeof(ApplicationSpecificData), MEMORY_APPLICATION); // This fixed the issue with crash on attempt to de-allocate
-	ApplicationCreationInfo appInfo = {
-		.data = data,
-		.AppSpecificDataSize = 
-		sizeof(ApplicationSpecificData),
-		.OnCreate = OnCreate,
-		.OnUpdate = OnUpdate,
-		.OnFixedUpdate = OnFixedUpdate,
-		.OnDestroy = OnDestroy,
-		.windowHeight = 600,
-		.windowWidth = 800,
-		.AppName = "TestBed"
-	};
-	return appInfo;
+void GetAppInfo(appinfo* info) {
+    *info = (appinfo) {
+        .name = "WAG: Testbed",
+        .dwinw = 800,
+        .dwinh = 600,
+        .data = 0,
+        .datalen = sizeof(TestBed),
+        .fixed_timestep = 0.0,
+        .OnCreate = (PFNOnCreate)OnCreate,
+        .OnUpdate = (PFNOnUpdate)OnUpdate,
+        .OnFixedUpdate = (PFNOnFixedUpdate)OnFixedUpdate,
+        .OnDestroy = (PFNOnDestroy)OnDestroy
+    };
 }
