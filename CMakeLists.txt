@@ -1,19 +1,20 @@
 cmake_minimum_required(VERSION 3.22)
-# Setup WAGInclude dir and a global build dir
-project(WAGBuild)
-set(WAG_INCLUDE_DIR  "${CMAKE_CURRENT_SOURCE_DIR}/WAG/include")
-set(GLM_INCLUDE_DIR  "${CMAKE_CURRENT_SOURCE_DIR}/vendor/glm")
-set(GLOBAL_BUILD_DIR "${CMAKE_CURRENT_SOURCE_DIR}/bin")
-file(MAKE_DIRECTORY ${GLOBAL_BUILD_DIR})
+project(WAGProjectManager
+    VERSION 1.0.0
+    DESCRIPTION "All WAG Projects"
+)
 
-add_subdirectory(WAG)
-add_subdirectory(TestBed)
+set(GLOBAL_OUTPUT_DIR "${CMAKE_SOURCE_DIR}/out")
 
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/bin)
-set(CMAKE_DEBUG_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/bin)
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY_DEBUG "${GLOBAL_OUTPUT_DIR}")
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY_DEBUG "${GLOBAL_OUTPUT_DIR}")
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG "${GLOBAL_OUTPUT_DIR}")
 
-# Renderers
-add_custom_target(VulkanRenderer ALL
-  COMMAND make -f ${CMAKE_CURRENT_SOURCE_DIR}/VulkanRenderer/build.mk all -C ${CMAKE_CURRENT_SOURCE_DIR}/VulkanRenderer
-  BYPRODUCTS VulkanRenderer/bin/VulkanRenderer
-  VERBATIM)
+set(WAG_ENGINE_NAME "WAG")
+set(WAG_ENGINE_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/Engine/include")
+
+add_subdirectory("Engine")
+add_subdirectory("Editor")
+add_subdirectory("Tests")
+
+#add_subdirectory("App")

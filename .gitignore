@@ -1,4 +1,4 @@
-bin/
+.cache
+.vscode
 build/
-.vscode/
-VulkanRenderer/target/
+out/
