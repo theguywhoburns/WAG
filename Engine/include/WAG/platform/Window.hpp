@@ -1,28 +1,14 @@
 #pragma once
-#include <WAG/WAG.hpp>
-#include <WAG/event.hpp>
-#include <WAG/input.hpp>
+#include "WAG/input.hpp"
+#include <WAG/platform/platform.hpp>
 
-#include <cstdint>
 #include <memory>
 #include <string>
 #include <utility>
 
 namespace WAG::Platform {
-enum class PlatformType { Windows, Linux, MacOS };
-// Window interface, platform specific implementations are isolated
-class WAG_API IWindow;
-#if defined(WAG_PLATFORM_WINDOWS)
-constexpr PlatformType platform = PlatformType::Windows;
-#elif defined(WAG_PLATFORM_LINUX)
-constexpr PlatformType platform = PlatformType::Linux;
-#elif defined(WAG_PLATFORM_MACOS)
-constexpr PlatformType platform = PlatformType::MacOS;
-#endif
-
 WAG_API std::tuple<uint32_t, uint32_t> getScreenResolution();
 WAG_API float getScreenDpi();
-
 class WAG_API IWindow {
 public:
   struct BaseEvent {
@@ -46,11 +32,19 @@ public:
     ::WAG::Input::Key key;
     bool pressed;
   };
+  struct MouseButtonEvent : BaseEvent {
+    Input::MouseButton button;
+    bool pressed;
+  };
+  struct MouseMoveEvent : BaseEvent {
+    int x, y;
+  };
 
   enum class WindowState : uint8_t { Windowed = 0, Borderless };
   static void Update();
   static ::std::unique_ptr<IWindow> Create(const char *window_name,
-                                           uint32_t width, uint32_t height);
+                                           uint32_t width, uint32_t height,
+                                           const char *iconPath);
   virtual bool isOpen() const = 0;
   virtual void show() = 0;
   virtual void minimize() = 0;
@@ -75,9 +69,7 @@ public:
   virtual std::pair<int32_t, int32_t> getPosition() const = 0;
   virtual std::pair<uint32_t, uint32_t> getInnerSize() const = 0;
   virtual void *getNativeWindow() const = 0;
+  virtual void setIcon(const char *path, bool setMenu = false) = 0;
   virtual ~IWindow() = default;
 };
-
-WAG_API std::unique_ptr<IWindow> createWindow(const std::string &title,
-                                              uint32_t width, uint32_t height);
 }; // namespace WAG::Platform

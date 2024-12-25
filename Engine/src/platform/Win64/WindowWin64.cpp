@@ -1,56 +1,22 @@
 #include <WAG/WAG.hpp>
 #include <WAG/event.hpp>
 #include <WAG/input.hpp>
-#include <WAG/platform.hpp>
+#include <WAG/platform/Window.hpp>
+#include <WAG/platform/platform.hpp>
 #include <WAG/util.hpp>
 #include <cstdint>
 #include <memory>
 
 #if defined(WAG_PLATFORM_WINDOWS)
 #include <Windows.h>
-namespace WAG::Platform::Win32 {
-// Returns the last Win32 error, in string format. Returns an empty string if
-// there is no error.
-std::string ErrorAsString(DWORD errorMessageID) {
-  if (errorMessageID == 0) {
-    return std::string(); // No error message has been recorded
-  }
-
-  LPSTR messageBuffer = nullptr;
-
-  // Ask Win32 to give us the string version of that message ID.
-  // The parameters we pass in, tell Win32 to create the buffer that holds the
-  // message for us (because we don't yet know how long the message string will
-  // be).
-  size_t size = FormatMessageA(
-      FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM |
-          FORMAT_MESSAGE_IGNORE_INSERTS,
-      NULL, errorMessageID, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-      (LPSTR)&messageBuffer, 0, NULL);
-
-  // Copy the error message into a std::string.
-  std::string message(messageBuffer, size);
-
-  // Free the Win32's string's buffer.
-  LocalFree(messageBuffer);
-
-  return message;
-}
-
-void reportError(bool cond, const char *msg) {
-  if (!cond) {
-    auto errorMessageID = GetLastError();
-    auto errStr = ErrorAsString(errorMessageID);
-    Log<LogLevel::Error>("Failed to %s: %s", msg, errStr.c_str());
-    throw std::runtime_error("Failed to " + std::string(msg) + ": " + errStr);
-  }
-}
+#include <Windowsx.h>
+namespace WAG::Platform::Win64 {
 
 LRESULT CALLBACK FirstStageWindowProcedure(HWND hWnd, UINT message,
                                            WPARAM wParam, LPARAM lParam);
 LRESULT CALLBACK WAGWindowProcedure(HWND hWnd, UINT message, WPARAM wParam,
                                     LPARAM lParam);
-class WAG_API Win32Window : public ::WAG::Platform::IWindow {
+class WAG_API Win64Window : public ::WAG::Platform::IWindow {
   friend LRESULT CALLBACK FirstStageWindowProcedure(HWND hWnd, UINT message,
                                                     WPARAM wParam,
                                                     LPARAM lParam);
@@ -63,7 +29,7 @@ class WAG_API Win32Window : public ::WAG::Platform::IWindow {
   DWORD fullScreenStyle = 0, fullScreenExStyle = 0;
 
 public:
-  Win32Window(const char *window_name, uint32_t width, uint32_t height) {
+  Win64Window(const char *window_name, uint32_t width, uint32_t height) {
     static bool isPlatformInitialized = false;
     style = WS_OVERLAPPEDWINDOW;
     exStyle = 0;
@@ -215,16 +181,29 @@ public:
 
   void *getNativeWindow() const override { return mHWnd; }
 
-  ~Win32Window() override {
+  ~Win64Window() override {
     DestroyWindow(mHWnd);
     RemoveProp(mHWnd, TEXT("WAGWindow"));
+  }
+
+  void setIcon(const char *path, bool setMenu = false) override {
+    // Load small and big icons
+    HANDLE hSmallIcon =
+        LoadImageA(0, path, IMAGE_ICON, 32, 32, LR_LOADFROMFILE);
+    // Report errors and set icons for the main window
+    reportError(hSmallIcon != INVALID_HANDLE_VALUE && hSmallIcon != nullptr,
+                ("load small icon from file: " + std::string(path)).c_str());
+    SendMessage(mHWnd, WM_SETICON, ICON_SMALL, (LPARAM)hSmallIcon);
+    // Clean up resources
+    if (hSmallIcon)
+      DestroyIcon((HICON)hSmallIcon);
   }
 };
 
 LRESULT CALLBACK WAGWindowProcedure(HWND hWnd, UINT message, WPARAM wParam,
                                     LPARAM lParam) {
-  Win32::Win32Window *window =
-      reinterpret_cast<Win32::Win32Window *>(GetProp(hWnd, TEXT("WAGWindow")));
+  Win64::Win64Window *window =
+      reinterpret_cast<Win64::Win64Window *>(GetProp(hWnd, TEXT("WAGWindow")));
   using ::WAG::Platform::IWindow;
   Event::Dispatcher platform_dispatcher;
   switch (message) {
@@ -233,6 +212,7 @@ LRESULT CALLBACK WAGWindowProcedure(HWND hWnd, UINT message, WPARAM wParam,
     break;
   case WM_PAINT:
   case WM_NCPAINT:
+
     break;
   case WM_SIZE:
     platform_dispatcher.dispatch(
@@ -266,21 +246,22 @@ LRESULT CALLBACK WAGWindowProcedure(HWND hWnd, UINT message, WPARAM wParam,
   case WM_KEYUP:
   case WM_SYSKEYUP: {
     bool down = (message == WM_KEYDOWN || message == WM_SYSKEYDOWN);
-    Input::Key key = Input::Key(wParam);
+    Input::Key key = Input::Key(static_cast<uint16_t>(wParam % 256));
     bool isExt = (HIWORD(lParam) & KF_EXTENDED) == KF_EXTENDED;
     if (wParam == VK_MENU) {
-      key = isExt ? Input::Key::RAlt : Input::Key::LAlt;
+      key = isExt ? Input::Key::KeyRAlt : Input::Key::KeyLAlt;
     } else if (wParam == VK_SHIFT) {
       uint32_t leftShift = MapVirtualKey(VK_LSHIFT, MAPVK_VK_TO_VSC);
       uint32_t scancode = ((lParam & (0xFF << 16)) >> 16);
-      key = scancode == leftShift ? Input::Key::LShift : Input::Key::RShift;
+      key =
+          scancode == leftShift ? Input::Key::KeyLShift : Input::Key::KeyRShift;
     } else if (wParam == VK_CONTROL) {
-      key = isExt ? Input::Key::RControl : Input::Key::LControl;
+      key = isExt ? Input::Key::KeyRControl : Input::Key::KeyLControl;
     }
 
     // HACK: This is gross windows keybind crap, from kohi engine
     if (key == VK_OEM_1) {
-      key = Input::Key::Semicolon;
+      key = Input::Key::KeySemicolon;
     }
 
     platform_dispatcher.dispatch(IWindow::KeyPressEvent{window, key, down});
@@ -290,6 +271,23 @@ LRESULT CALLBACK WAGWindowProcedure(HWND hWnd, UINT message, WPARAM wParam,
     info->ptMinTrackSize.x = window->minX;
     info->ptMinTrackSize.y = window->minY;
   }
+  case WM_LBUTTONDOWN:
+  case WM_LBUTTONUP:
+  case WM_RBUTTONDOWN:
+  case WM_RBUTTONUP:
+  case WM_MBUTTONDOWN:
+  case WM_MBUTTONUP: {
+    bool down = (message == WM_LBUTTONDOWN || message == WM_RBUTTONDOWN ||
+                 message == WM_MBUTTONDOWN);
+    Input::MouseButton button = Input::MouseButton(wParam);
+    platform_dispatcher.dispatch(
+        IWindow::MouseButtonEvent{window, button, down});
+  } break;
+  case WM_MOUSEMOVE: {
+    int x = GET_X_LPARAM(lParam);
+    int y = GET_Y_LPARAM(lParam);
+    platform_dispatcher.dispatch(IWindow::MouseMoveEvent{window, x, y});
+  } break;
   }
 
   return DefWindowProc(hWnd, message, wParam, lParam);
@@ -303,7 +301,7 @@ LRESULT CALLBACK FirstStageWindowProcedure(HWND hWnd, UINT message,
   }
   return DefWindowProc(hWnd, message, wParam, lParam);
 }
-}; // namespace WAG::Platform::Win32
+}; // namespace WAG::Platform::Win64
 
 namespace WAG::Platform {
 // Just a caller for the event dispatcher
@@ -317,21 +315,30 @@ void IWindow::Update() {
 }
 
 ::std::unique_ptr<IWindow> IWindow::Create(const char *window_name,
-                                           uint32_t width, uint32_t height) {
+                                           uint32_t width, uint32_t height,
+                                           const char *iconPath) {
   static bool isPlatformInitialized = false;
   if (!isPlatformInitialized) {
     WNDCLASSEX wc = {sizeof(WNDCLASSEX)};
     wc.cbSize = sizeof(WNDCLASSEX);
-    wc.lpfnWndProc = Win32::FirstStageWindowProcedure;
+    wc.lpfnWndProc = Win64::FirstStageWindowProcedure;
     wc.hInstance = GetModuleHandle(nullptr);
     wc.lpszClassName = TEXT("WAGWindowClass");
+    wc.hIcon = static_cast<HICON>(LoadImageA(GetModuleHandle(nullptr), iconPath,
+                                             IMAGE_ICON, 0, 0,
+                                             LR_LOADFROMFILE | LR_DEFAULTSIZE));
+    wc.hIconSm =
+        static_cast<HICON>(LoadImageA(GetModuleHandle(nullptr), iconPath,
+                                      IMAGE_ICON, 16, 16, LR_LOADFROMFILE));
+    wc.hbrBackground = (HBRUSH)GetStockObject(NULL_BRUSH);
+    wc.lpszMenuName = nullptr;
+    wc.style = CS_HREDRAW | CS_VREDRAW;
     auto res = RegisterClassEx(&wc);
-    ::WAG::Platform::Win32::reportError(
-        res != 0 || GetLastError() == ERROR_CLASS_ALREADY_EXISTS,
-        "Failed to register window class");
+    reportError(res != 0 || GetLastError() == ERROR_CLASS_ALREADY_EXISTS,
+                "register window class");
     isPlatformInitialized = true;
   }
-  return ::std::make_unique<::WAG::Platform::Win32::Win32Window>(window_name,
+  return ::std::make_unique<::WAG::Platform::Win64::Win64Window>(window_name,
                                                                  width, height);
 }
 
@@ -339,7 +346,7 @@ WAG_API std::tuple<uint32_t, uint32_t> getScreenResolution() {
   RECT desktop;
   const HWND hDesktop = GetDesktopWindow();
   if (!GetWindowRect(hDesktop, &desktop)) {
-    ::WAG::Platform::Win32::reportError(false, "Failed to get desktop rect");
+    reportError(false, "Failed to get desktop rect");
   }
   return {static_cast<uint32_t>(desktop.right),
           static_cast<uint32_t>(desktop.bottom)};
@@ -347,11 +354,10 @@ WAG_API std::tuple<uint32_t, uint32_t> getScreenResolution() {
 
 WAG_API float getScreenDpi() {
   HDC screen = GetDC(nullptr);
-  ::WAG::Platform::Win32::reportError(screen != nullptr,
-                                      "Failed to get screen DC");
+  reportError(screen != nullptr, "Failed to get screen DC");
   int dpiX = GetDeviceCaps(screen, LOGPIXELSX);
   ReleaseDC(nullptr, screen);
-  ::WAG::Platform::Win32::reportError(dpiX != 0, "Failed to get screen DPI");
+  reportError(dpiX != 0, "Failed to get screen DPI");
   return static_cast<float>(dpiX);
 }
 }; // namespace WAG::Platform

@@ -1,5 +1,6 @@
 #pragma once
-
+#include <cstdint>
+#include <memory>
 #if defined(_WIN32) || defined(_WIN64) || defined(__WIN64) || defined(__WIN64__)
 #if !defined(_WIN64) && !defined(__WIN64) && !defined(__WIN64__)
 #error "Only windows 64 bit is supported"
@@ -28,3 +29,25 @@
 #define WAG_API
 #endif
 #endif
+
+namespace WAG {
+namespace Platform {
+class WAG_API IWindow;
+
+}; // namespace Platform
+class WAG_API EngineConfig {
+public:
+  const char *name;
+  const uint32_t width = 1024, height = 768;
+}; // class WAG_API EngineConfig
+
+class WAG_API Engine {
+public:
+  Engine(EngineConfig config = {.name = "WAG", .width = 1024, .height = 768});
+  int run();
+  ~Engine();
+
+private:
+  ::std::unique_ptr<Platform::IWindow> mWindow;
+}; // class WAG_API Engine
+}; // namespace WAG

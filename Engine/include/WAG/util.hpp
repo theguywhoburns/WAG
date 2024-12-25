@@ -13,22 +13,22 @@ template <auto Min, auto Max,
           typename T = std::common_type_t<decltype(Min), decltype(Max)>>
 class WAG_API RangeValue {
 public:
-  constexpr RangeValue(T value) : value_(value) {
-    if (value_ < Min || value_ > Max) {
+  constexpr RangeValue(T value) : mValue(value) {
+    if (mValue < Min || mValue > Max) {
       throw std::out_of_range("Value is out of range");
     }
   }
-  constexpr T value() const { return value_; }
+  constexpr T value() const { return mValue; }
   constexpr T &operator=(T value) {
     if (value < Min || value > Max) {
       throw std::out_of_range("Value is out of range");
     }
-    value_ = value;
-    return value_;
+    mValue = value;
+    return mValue;
   }
 
 private:
-  T value_;
+  T mValue;
 };
 
 namespace Console {
